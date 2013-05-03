@@ -134,7 +134,7 @@ DataStore::CAS::FS::DirCodec::Minimal - Directory representation with minimal me
 
 =head1 VERSION
 
-version 0.0101_00
+version 0.0101
 
 =head1 DESCRIPTION
 

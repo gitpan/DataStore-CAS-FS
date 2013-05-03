@@ -134,7 +134,7 @@ DataStore::CAS::FS::DirCodec - Abstract base class for directory encoder/decoder
 
 =head1 VERSION
 
-version 0.0101_00
+version 0.0101
 
 =head1 SYNOPSIS
 

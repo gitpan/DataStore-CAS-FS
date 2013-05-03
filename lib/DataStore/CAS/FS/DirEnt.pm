@@ -66,7 +66,7 @@ DataStore::CAS::FS::DirEnt - Light-weight Immutable Directory Entry Object
 
 =head1 VERSION
 
-version 0.0101_00
+version 0.0101
 
 =head1 DESCRIPTION
 

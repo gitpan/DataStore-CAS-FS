@@ -28,4 +28,4 @@ requires:
   perl: 5.008001
   strict: 0
   warnings: 0
-version: 0.0101_00
+version: 0.0101

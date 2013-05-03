@@ -12,8 +12,6 @@ lib/DataStore/CAS/FS/DirCodec/Universal.pm
 lib/DataStore/CAS/FS/DirCodec/Unix.pm
 lib/DataStore/CAS/FS/DirEnt.pm
 lib/DataStore/CAS/FS/InvalidUTF8.pm
-pod2htmd.tmp
-pod2htmi.tmp
 t/00-load.t
 t/01-non-unicode.t
 t/30-dir.t
@@ -24,4 +22,3 @@ t/34-dircodec-unix.t
 t/50-fs.t
 t/release-pod-coverage.t
 t/release-pod-syntax.t
-tmp.html

@@ -524,7 +524,7 @@ DataStore::CAS::FS - Virtual Filesystem backed by Content-Addressable Storage
 
 =head1 VERSION
 
-version 0.0100
+version 0.0101_00
 
 =head1 SYNOPSIS
 
@@ -538,7 +538,7 @@ version 0.0100
   );
   
   # Open an existing root directory on an existing store
-  $casfs= DataStore::CAS::FS->new( store => $cas, root_dir => $digest_hash );
+  $casfs= DataStore::CAS::FS->new( store => $cas, root => $digest_hash );
   
   # --- These pass through to the $cas module
   
@@ -557,7 +557,7 @@ version 0.0100
 
 =head1 DESCRIPTION
 
-DataStore::CAS::FS extends the content-addressable API to support directory
+DataStore::CAS::FS extends the L<DataStore::CAS> API to support directory
 objects which let you store store traditional file hierarchies in the CAS,
 and look up files by a path name (so long as you know the hash of the root).
 
@@ -669,7 +669,7 @@ or a digest hash of that File within the store.
 
 =head2 get
 
-Alias for L<< store-E<gt>get|DataStore::CAS/get >>
+Alias for L<store-E<gt>get|DataStore::CAS/get>
 
 =head2 get_dir
 
@@ -688,23 +688,23 @@ occurs while decoding one that exists.
 
 =head2 put
 
-Alias for L<< store-E<gt>put | DataStore::CAS/put >>
+Alias for L<store-E<gt>put|DataStore::CAS/put>
 
 =head2 put_scalar
 
-Alias for L<< store-E<gt>put_scalar | DataStore::CAS/put_scalar >>
+Alias for L<store-E<gt>put_scalar|DataStore::CAS/put_scalar>
 
 =head2 put_file
 
-Alias for L<< store-E<gt>put_file | DataStore::CAS/put_file >>
+Alias for L<store-E<gt>put_file|DataStore::CAS/put_file>
 
 =head2 put_handle
 
-Alias for L<< store-E<gt>put_handle | DataStore::CAS/put_handle >>
+Alias for L<store-E<gt>put_handle|DataStore::CAS/put_handle>
 
 =head2 validate
 
-Alias for L<< store-E<gt>validate | DataStore::CAS/validate >>
+Alias for L<store-E<gt>validate|DataStore::CAS/validate>
 
 =head2 path
 
@@ -998,7 +998,7 @@ and some backward-compatible APIs exist which can represent the Unicode as
 Latin1 or whatnot on a best-effort basis.  I think the "Unicode everywhere"
 philosophy is arguably a better way to go, but as this tool is primarily
 designed with Unix in mind, and since it is intended for saving backups of real
-filesystems, it needs to be able to accurately store exactly what it find in
+filesystems, it needs to be able to accurately store exactly what it finds in
 the filesystem.  Essentially this means it neeeds to be *able* to store
 invalid UTF-8 sequences, -or- encode the octets as unicode codepoints up to
 0xFF, and later know to write them out to the filesystem as octets instead
@@ -1092,8 +1092,9 @@ when decoding the directory.
 
 =head1 SEE ALSO
 
-C<Brackup> - A similar-minded backup utility written in Perl, but without the
+L<Brackup> - A similar-minded backup utility written in Perl, but without the
 separation between library and application and with limited FUSE performance.
+(and rather sparse documentation)
 
 L<http://git-scm.com> - The world-famous version control tool
 

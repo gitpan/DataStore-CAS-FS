@@ -11,7 +11,7 @@ use parent 'DataStore::CAS::FS::DirCodec';
 require DataStore::CAS::FS::InvalidUTF8;
 require DataStore::CAS::FS::DirEnt;
 
-our $VERSION= 0.0100;
+our $VERSION= '0.0100';
 
 __PACKAGE__->register_format( universal => __PACKAGE__ );
 
@@ -96,7 +96,7 @@ DataStore::CAS::FS::DirCodec::Universal - Codec for saving all arbitrary fields 
 
 =head1 VERSION
 
-version 0.0100
+version 0.0101_00
 
 =head1 SYNOPSIS
 
@@ -167,7 +167,7 @@ directory.
 
 Reverses C<encode>, to create a Dir object.
 
-See L<< DirCodec-E<gt>load | DataStore::CAS::FS::DirCodec/load >> for details on C<%params>.
+See L<DirCodec-E<gt>load|DataStore::CAS::FS::DirCodec/load> for details on C<%params>.
 
 =head1 AUTHOR
 

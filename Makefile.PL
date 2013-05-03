@@ -33,12 +33,11 @@ my %WriteMakefileArgs = (
     "warnings" => 0
   },
   "TEST_REQUIRES" => {
-    "Carp::Always" => 0,
     "Data::Dumper" => 0,
     "Digest" => 0,
     "Test::More" => 0
   },
-  "VERSION" => "0.0100",
+  "VERSION" => "0.0101_00",
   "test" => {
     "TESTS" => "t/*.t"
   }

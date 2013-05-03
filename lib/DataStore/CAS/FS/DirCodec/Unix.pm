@@ -11,7 +11,7 @@ require DataStore::CAS::FS::Dir;
 
 use parent 'DataStore::CAS::FS::DirCodec';
 
-our $VERSION= 0.0100;
+our $VERSION= '0.0100';
 
 __PACKAGE__->register_format(unix => __PACKAGE__);
 
@@ -184,7 +184,7 @@ DataStore::CAS::FS::DirCodec::Unix - Efficiently encode only the attributes of a
 
 =head1 VERSION
 
-version 0.0100
+version 0.0101_00
 
 =head1 DESCRIPTION
 
@@ -210,13 +210,13 @@ shouldn't ever be a problem.
 
   $serialized= $class->encode( \@entries, \%metadata )
 
-See L<< DirCodec-E<gt>encode | DataStore::CAS::FS::DirCodec/encode >> for details.
+See L<DirCodec-E<gt>encode|DataStore::CAS::FS::DirCodec/encode> for details.
 
 =head2 decode
 
   my $dir= $class->decode( \%params )
 
-See L<< DirCodec-E<gt>load | DataStore::CAS::FS::DirCodec/load >> for details on C<%params>.
+See L<DirCodec-E<gt>load|DataStore::CAS::FS::DirCodec/load> for details on C<%params>.
 
 =head1 AUTHOR
 

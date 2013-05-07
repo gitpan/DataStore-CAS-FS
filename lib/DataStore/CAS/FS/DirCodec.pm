@@ -5,7 +5,7 @@ use warnings;
 use Carp;
 use Try::Tiny;
 
-our $VERSION= '0.0100';
+our $VERSION= '0.010000';
 
 our %_Formats= ();
 
@@ -134,7 +134,7 @@ DataStore::CAS::FS::DirCodec - Abstract base class for directory encoder/decoder
 
 =head1 VERSION
 
-version 0.0101
+version 0.010100_01
 
 =head1 SYNOPSIS
 

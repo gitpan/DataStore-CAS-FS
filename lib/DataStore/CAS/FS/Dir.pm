@@ -5,7 +5,7 @@ use warnings;
 use Carp;
 use Try::Tiny;
 
-our $VERSION= '0.0100';
+our $VERSION= '0.010000';
 
 # ABSTRACT: Object representing a directory of file entries, indexed by filename.
 
@@ -69,7 +69,7 @@ DataStore::CAS::FS::Dir - Object representing a directory of file entries, index
 
 =head1 VERSION
 
-version 0.0101
+version 0.010100_01
 
 =head1 SYNOPSIS
 

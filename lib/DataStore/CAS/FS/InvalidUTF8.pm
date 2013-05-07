@@ -4,7 +4,7 @@ use warnings;
 use Carp;
 use overload '""' => \&to_string, 'cmp' => \&str_compare, '.' => \&str_concat;
 
-our $VERSION= '0.0100';
+our $VERSION= '0.010000';
 
 # ABSTRACT: Wrapper to represent non-utf8 data in a unicode context
 
@@ -67,7 +67,7 @@ DataStore::CAS::FS::InvalidUTF8 - Wrapper to represent non-utf8 data in a unicod
 
 =head1 VERSION
 
-version 0.0101
+version 0.010100_01
 
 =head1 SYNOPSIS
 

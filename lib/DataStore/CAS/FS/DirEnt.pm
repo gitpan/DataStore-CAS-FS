@@ -2,7 +2,7 @@ package DataStore::CAS::FS::DirEnt;
 use strict;
 use warnings;
 
-our $VERSION= '0.0100';
+our $VERSION= '0.010000';
 
 # ABSTRACT: Light-weight Immutable Directory Entry Object
 
@@ -66,7 +66,7 @@ DataStore::CAS::FS::DirEnt - Light-weight Immutable Directory Entry Object
 
 =head1 VERSION
 
-version 0.0101
+version 0.010100_01
 
 =head1 DESCRIPTION
 

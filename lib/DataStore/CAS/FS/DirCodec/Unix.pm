@@ -11,7 +11,7 @@ require DataStore::CAS::FS::Dir;
 
 use parent 'DataStore::CAS::FS::DirCodec';
 
-our $VERSION= '0.0100';
+our $VERSION= '0.010000';
 
 __PACKAGE__->register_format(unix => __PACKAGE__);
 
@@ -184,7 +184,7 @@ DataStore::CAS::FS::DirCodec::Unix - Efficiently encode only the attributes of a
 
 =head1 VERSION
 
-version 0.0101
+version 0.010100_01
 
 =head1 DESCRIPTION
 

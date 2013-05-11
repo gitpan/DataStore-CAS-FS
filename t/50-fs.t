@@ -66,8 +66,8 @@ my $sto= new_ok('DataStore::CAS::Virtual', [ entries => \%content ], 'create vir
 
 subtest resolve_path => sub {
 	my $cas= new_ok('DataStore::CAS::FS', [ store => $sto, root => $rootEntry ], 'create file view of cas' );
-	is( $cas->resolve_path('/')->[-1], $rootEntry, 'resolve root abs' );
-	is( $cas->resolve_path('.')->[-1], $rootEntry, 'resolve current dir at root' );
+	is_deeply( $cas->resolve_path('/'), [ $rootEntry ], 'resolve root abs' );
+	is_deeply( $cas->resolve_path('.'), [ $rootEntry ], 'resolve current dir at root' );
 
 	is( $cas->resolve_path('/a/b/c')->[-1]->ref, 'root.a.b.c', 'follow subdir abs' );
 	is( $cas->resolve_path('a/b/c')->[-1]->ref, 'root.a.b.c', 'follow subdir rel' );
@@ -83,9 +83,16 @@ subtest resolve_path => sub {
 	is( $cas->resolve_path('a/b/f/i/')->[-1]->ref,     'root.a.b.f.g',      'resolve symlink target dir' );
 	is( $cas->resolve_path('a/b/f/i/j/f1')->[-1]->ref, 'root.a.b.f.g.j.f1', 'resolve through symlink' );
 
-	is( $cas->resolve_path('a/../a/../a/..')->[-1], $rootEntry, 'follow ".."' );
+	is_deeply( $cas->resolve_path('a/../a/../a/..'), [ $rootEntry ], 'follow ".."' );
 	is( $cas->resolve_path('a/./b/./././.')->[-1]->ref, 'root.a.b', 'follow "."' );
 	is( $cas->resolve_path('a/b/c/d/e/L3/../f10')->[-1]->ref, 'root.a.f10', 'follow symlink through ".."' );
+	
+	ok( exists $cas->_nodes->{subtree}{a}, 'subtree "a" was visited' );
+	ok( !defined $cas->_nodes->{subtree}{a}, 'subtree "a" was garbage collected' );
+	my $x= $cas->path('a/b');
+	$x->resolve;
+	ok( defined $cas->_nodes->{subtree}{a}, 'subtree "a" is not garbage collected' );
+	ok( defined $cas->_nodes->{subtree}{a}{subtree}{b}, 'subtree "a/b" is not garbage collected' );
 	done_testing;
 };
 
@@ -99,8 +106,13 @@ subtest dir_listing => sub {
 subtest alter_path => sub {
 	my $cas= new_ok('DataStore::CAS::FS', [ store => $sto, root => $rootEntry ], 'create file view of cas' );
 	ok( $cas->update_path('a/b/c', { type => 'dir', ref => 'root.a.b.c.d' }), 'update path' );
-	isa_ok( $cas->_path_overrides, 'HASH', 'overrides initiated' );
+	isa_ok( $cas->_nodes, 'HASH', 'overrides initiated' );
 	is( $cas->resolve_path('/a/b/c')->[-1]->ref, 'root.a.b.c.d', 'directory is relinked' );
+	is( $cas->_nodes->{subtree}{a}{subtree}{b}{subtree}{c}{subtree}, undef, 'a/b/c is a leaf' );
+	is( $cas->_nodes->{subtree}{a}{subtree}{b}{subtree}{c}{changed}, 1, 'a/b/c changed' );
+	is( $cas->_nodes->{subtree}{a}{subtree}{b}{changed}, 1, 'a/b changed' );
+	is( $cas->_nodes->{subtree}{a}{changed}, 1, 'a changed' );
+	is( $cas->_nodes->{changed}, 1, 'root changed' );
 	is( $cas->resolve_path('/a/b/c/L1')->[-1]->type, 'symlink', 'traverse relinked directory' );
 	is( $cas->root_entry->ref, 'root', 'root entry unchanged' );
 	ok( $cas->commit, 'commit' );
@@ -119,6 +131,12 @@ subtest alter_path => sub {
 	@expected= ('b');
 	@actual= $cas->readdir('a');
 	is_deeply( \@actual, \@expected, 'recreate dir' );
+
+	is_deeply( $cas->mkdir('a') && [ $cas->readdir('a') ], [ 'b' ], 'mkdir already existing' );
+	is_deeply( $cas->mkdir('a/c') && [ $cas->readdir('a') ], [ 'b', 'c' ], 'mkdir immediate' );
+	is_deeply( $cas->mkdir('a/c/x/y/z/A') && [ $cas->readdir('a/c/x/y/z') ], ['A'], 'mkdir deep' );
+	ok( $cas->commit, 'commit' );
+	is_deeply( [ $cas->readdir('a/c/x/y/z') ], ['A'], 'committed' );
 	
 	done_testing;
 };
@@ -131,6 +149,16 @@ subtest path_objects => sub {
 	isa_ok( $path= $cas->path('a','b','c','d')->path('..','..','f','i','j','f1'), 'DataStore::CAS::FS::Path' );
 	ok( $handle= $path->open );
 	is( do { local $/= undef; scalar <$handle> }, 'sdlfshldkjflskdfjslkdjf' );
+
+	is( $cas->path_if_exists("x"), undef, 'path_if_exists returns undef for invalid' );
+	isa_ok( $cas->path_if_exists("a"), 'DataStore::CAS::FS::Path', 'path_if_exists return Path for valid' );
+	$path= $cas->path("a");
+	is( $path->path_if_exists('m'), undef, 'path_if_exists from path object' );
+	isa_ok( $path->path_if_exists('b'), 'DataStore::CAS::FS::Path', 'path_if_exists from path object' );
+
+	$path= $cas->path("a/x/y/z")->mkdir();
+	is_deeply( [ $path->readdir ], [], 'empty dir' );
+	
 	done_testing;
 };
 

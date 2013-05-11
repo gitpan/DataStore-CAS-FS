@@ -4,19 +4,28 @@ use strict;
 use warnings;
 use Try::Tiny;
 use Carp;
-use JSON;
+use JSON 2.53 ();
 use Scalar::Util 'looks_like_number';
-require DataStore::CAS::FS::InvalidUTF8;
 require DataStore::CAS::FS::Dir;
+require DataStore::CAS::FS::DirEnt;
+require DataStore::CAS::FS::InvalidUTF8;
+*decode_utf8= *DataStore::CAS::FS::InvalidUTF8::decode_utf8;
 
 use parent 'DataStore::CAS::FS::DirCodec';
 
-our $VERSION= '0.010000';
+our $VERSION= '0.011000';
 
 __PACKAGE__->register_format(unix => __PACKAGE__);
 
 # ABSTRACT: Efficiently encode only the attributes of a UNIX stat()
 
+
+our $_json_coder;
+sub _build_json_coder {
+	DataStore::CAS::FS::InvalidUTF8->add_json_filter(
+		JSON->new->utf8->canonical->convert_blessed, 1
+	);
+}
 
 our %_TypeToCode= (
 	file => ord('f'), dir => ord('d'), symlink => ord('l'),
@@ -25,8 +34,8 @@ our %_TypeToCode= (
 );
 our %_CodeToType= map { $_TypeToCode{$_} => $_ } keys %_TypeToCode;
 our @_FieldOrder= qw(
-	type name ref size modify_ts unix_uid unix_gid unix_mode unix_ctime
-	unix_atime unix_nlink unix_dev unix_inode unix_blocksize unix_blockcount
+	type name ref size modify_ts unix_uid unix_gid unix_mode metadata_ts
+	access_ts unix_nlink unix_dev unix_inode unix_blocksize unix_blockcount
 );
 
 sub encode {
@@ -37,20 +46,21 @@ sub encode {
 	my (%umap, %gmap);
 	my @entries= map {
 		my $e= ref $_ eq 'HASH'? $_ : $_->as_hash;
+		defined $e->{type}
+			or croak "'type' attribute is required";
 		my $code= $_TypeToCode{$e->{type}}
 			or croak "Unknown directory entry type: ".$e->{type};
+
 		my $name= $e->{name};
+		defined $name
+			or croak "'name' attribute is required";
+		_make_utf8($name)
+			or croak "'name' must be a unicode scalar or an InvalidUTF8 instance";
+
 		my $ref= $e->{ref};
-
-		!defined $name? croak "Missing required attribute 'name'"
-			: !ref $name? utf8::encode($name)
-			: ref($name)->can('is_non_unicode')? ($name= "$name")
-			: croak "'name' must be a scalar or a InvalidUTF8 instance";
-
-		!defined $ref? ($ref= '')
-			: !ref $ref? utf8::encode($ref)
-			: ref($ref)->can('is_non_unicode')? ($ref= "$ref")
-			: croak "'ref' must be a scalar or a InvalidUTF8 instance";
+		$ref= '' unless defined $ref;
+		_make_utf8($ref)
+			or croak "'ref' must be a unicode scalar or an InvalidUTF8 instance";
 
 		$umap{$e->{unix_uid}}= $e->{unix_user}
 			if defined $e->{unix_uid} && defined $e->{unix_user};
@@ -74,13 +84,32 @@ sub encode {
 	$metadata->{_}{umap}= \%umap;
 	$metadata->{_}{gmap}= \%gmap;
 	
-	my $meta_json= JSON->new->utf8->canonical->convert_blessed->encode($metadata);
+	my $meta_json= ($_json_coder ||= _build_json_coder())->encode($metadata);
 	my $ret= "CAS_Dir 04 unix\n"
 		.pack('N', length($meta_json)).$meta_json
 		.join('', sort { substr($a,4) cmp substr($b,4) } @entries);
 	croak "Accidental unicode concatenation"
 		if utf8::is_utf8($ret);
 	$ret;
+}
+
+# Convert string in-place to utf-8 bytes, or return false.
+# A less speed-obfuscated version might read:
+#  my $str= shift;
+#  if (ref $str) {
+#    return 0 unless ref($str)->can('TO_UTF8');
+#    $_[0]= $str->TO_UTF8;
+#    return 1;
+#  } elsif (utf8::is_utf8($str)) {
+#    utf8::encode($_[0]);
+#    return 1;
+#  } else {
+#    return !($_[0] =~ /[\x7F-\xFF]/);
+#  }
+sub _make_utf8 {
+	ref $_[0]?
+		(ref($_[0])->can('TO_UTF8') && (($_[0]= $_[0]->TO_UTF8) || 1))
+		: &utf8::is_utf8 && (&utf8::encode || 1) || !($_[0] =~ /[\x80-\xFF]/);
 }
 
 
@@ -107,9 +136,7 @@ sub decode {
 	$class->_readall($handle, $buf, 4);
 	my ($dirmeta_len)= unpack('N', $buf);
 	$class->_readall($handle, my $json, $dirmeta_len);
-	my $enc= JSON->new()->utf8->canonical->convert_blessed;
-	DataStore::CAS::FS::InvalidUTF8->add_json_filter($enc);
-	my $meta= $enc->decode($json);
+	my $meta= ($_json_coder ||= _build_json_coder())->decode($json);
 
 	# Quick sanity checks
 	ref $meta->{_}{umap} and ref $meta->{_}{gmap}
@@ -152,8 +179,8 @@ sub modify_ts       { $_[0][5] }
 sub unix_uid        { $_[0][6] }
 sub unix_gid        { $_[0][7] }
 sub unix_mode       { $_[0][8] }
-sub unix_ctime      { $_[0][9] }
-sub unix_atime      { $_[0][10] }
+sub metadata_ts     { $_[0][9] }
+sub access_ts       { $_[0][10] }
 sub unix_nlink      { $_[0][11] }
 sub unix_dev        { $_[0][12] }
 sub unix_inode      { $_[0][13] }
@@ -161,6 +188,8 @@ sub unix_blocksize  { $_[0][14] }
 sub unix_blockcount { $_[0][15] }
 
 *unix_mtime= *modify_ts;
+*unix_atime= *access_ts;
+*unix_ctime= *metadata_ts;
 sub unix_user       { my $self= shift; $self->_dirmeta->{umap}{ $self->unix_uid } }
 sub unix_group      { my $self= shift; $self->_dirmeta->{gmap}{ $self->unix_gid } }
 
@@ -184,7 +213,7 @@ DataStore::CAS::FS::DirCodec::Unix - Efficiently encode only the attributes of a
 
 =head1 VERSION
 
-version 0.010100_01
+version 0.010100_02
 
 =head1 DESCRIPTION
 

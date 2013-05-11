@@ -4,17 +4,17 @@ use warnings;
 use Carp;
 use overload '""' => \&to_string, 'cmp' => \&str_compare, '.' => \&str_concat;
 
-our $VERSION= '0.010000';
+our $VERSION= '0.011000';
 
 # ABSTRACT: Wrapper to represent non-utf8 data in a unicode context
 
 
 sub decode_utf8 {
-	my ($class, $str)= @_;
-	!ref $str || ref($str)->isa($class)
+	my $str= $_[-1];
+	!ref $str || ref($str)->isa(__PACKAGE__)
 		or croak "Can't convert ".ref($str);
 	return ref($str) || utf8::is_utf8($str) || utf8::decode($str)? $str
-		: bless(\$str, $class);
+		: bless(\$str, __PACKAGE__);
 }
 
 sub is_non_unicode { 1 }
@@ -55,6 +55,10 @@ sub FROM_JSON {
 	return bless \$x, __PACKAGE__;
 }
 
+sub TO_UTF8 {
+	${$_[0]};
+}
+
 1;
 
 __END__
@@ -67,7 +71,7 @@ DataStore::CAS::FS::InvalidUTF8 - Wrapper to represent non-utf8 data in a unicod
 
 =head1 VERSION
 
-version 0.010100_01
+version 0.010100_02
 
 =head1 SYNOPSIS
 

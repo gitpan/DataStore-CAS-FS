@@ -21,11 +21,14 @@ my %WriteMakefileArgs = (
   "NAME" => "DataStore::CAS::FS",
   "PREREQ_PM" => {
     "Carp" => 0,
-    "DataStore::CAS" => "0.01",
+    "DataStore::CAS" => "0.02",
+    "Fcntl" => 0,
     "File::Spec" => "3.33",
+    "File::Spec::Functions" => 0,
     "JSON" => "2.53",
     "Moo" => "1.000007",
     "Scalar::Util" => 0,
+    "Socket" => 0,
     "Try::Tiny" => "0.11",
     "overload" => 0,
     "parent" => 0,
@@ -35,9 +38,10 @@ my %WriteMakefileArgs = (
   "TEST_REQUIRES" => {
     "Data::Dumper" => 0,
     "Digest" => 0,
+    "Path::Class" => 0,
     "Test::More" => 0
   },
-  "VERSION" => "0.010100_01",
+  "VERSION" => "0.010100_02",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -72,6 +76,10 @@ unless ( eval { ExtUtils::MakeMaker->VERSION(6.56) } ) {
 
 delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
   unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
+
+if ( $^O eq 'MSWin32' ) {
+	$WriteMakefileArgs{PREREQ_PM}{'Win32API::File'} = '0';
+}
 
 WriteMakefile(%WriteMakefileArgs);
 

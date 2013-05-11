@@ -2,21 +2,30 @@ package DataStore::CAS::FS::DirCodec::Minimal;
 use 5.008001;
 use strict;
 use warnings;
-use Carp;
 use Try::Tiny;
+use Carp;
 use JSON 2.53 ();
-require DataStore::CAS::FS::InvalidUTF8;
 require DataStore::CAS::FS::Dir;
+require DataStore::CAS::FS::DirEnt;
+require DataStore::CAS::FS::InvalidUTF8;
+*decode_utf8= *DataStore::CAS::FS::InvalidUTF8::decode_utf8;
 
 use parent 'DataStore::CAS::FS::DirCodec';
 
-our $VERSION= '0.010000';
+our $VERSION= '0.011000';
 
 __PACKAGE__->register_format('minimal' => __PACKAGE__);
 __PACKAGE__->register_format('' => __PACKAGE__);
 
 # ABSTRACT: Directory representation with minimal metadata
 
+
+our $_json_coder;
+sub _build_json_coder {
+	DataStore::CAS::FS::InvalidUTF8->add_json_filter(
+		JSON->new->utf8->canonical->convert_blessed, 1
+	);
+}
 
 our %_TypeToCode= ( file => 'f', dir => 'd', symlink => 'l', chardev => 'c', blockdev => 'b', pipe => 'p', socket => 's' );
 our %_CodeToType= map { $_TypeToCode{$_} => $_ } keys %_TypeToCode;
@@ -27,32 +36,51 @@ sub encode {
 			( $_->{type}, $_->{ref}, $_->{name} )
 			: ( $_->type, $_->ref, $_->name );
 
+		defined $type
+			or croak "'type' attribute is required";
 		my $code= $_TypeToCode{$type}
 			or croak "Unknown directory entry type '$type' for entry $_";
+		defined $name
+			or croak "'name' attribute is required";
+		_make_utf8($name)
+			or croak "'name' must be a unicode scalar or an InvalidUTF8 instance";
+		$ref= '' unless defined $ref;
+		_make_utf8($ref)
+			or croak "'ref' must be a unicode scalar or an InvalidUTF8 instance";
 
-		!defined $name? croak "Missing required attribute 'name'"
-			: !ref $name? utf8::encode($name)
-			: ref($name)->can('is_non_unicode')? ($name= "$name")
-			: croak "'name' must be a scalar or a InvalidUTF8 instance";
-
-		!defined $ref? ($ref= '')
-			: !ref $ref? utf8::encode($ref)
-			: ref($ref)->can('is_non_unicode')? ($ref= "$ref")
-			: croak "'ref' must be a scalar or a InvalidUTF8 instance";
-
-		croak "Name too long: '$name'" if 255 < length $name;
-		croak "Value too long: '$ref'" if 255 < length $ref;
+		croak "'name' too long: '$name'" if 255 < length $name;
+		croak "'ref' too long: '$ref'" if 255 < length $ref;
 		pack('CCA', length($name), length($ref), $code).$name."\0".$ref."\0"
 	} @$entry_list;
 	
 	my $ret= "CAS_Dir 00 \n";
 	if ($metadata and scalar keys %$metadata) {
-		my $enc= JSON->new->utf8->canonical->convert_blessed;
-		$ret .= $enc->encode($metadata);
+		$ret .= ($_json_coder ||= _build_json_coder())->encode($metadata);
 	}
 	$ret .= "\0";
 	$ret .= join('', sort { substr($a,3) cmp substr($b,3) } @entries );
+	croak "Accidental unicode concatenation"
+		if utf8::is_utf8($ret);
 	$ret;
+}
+
+# Convert string in-place to utf-8 bytes, or return false.
+# A less speed-obfuscated version might read:
+#  my $str= shift;
+#  if (ref $str) {
+#    return 0 unless ref($str)->can('TO_UTF8');
+#    $_[0]= $str->TO_UTF8;
+#    return 1;
+#  } elsif (utf8::is_utf8($str)) {
+#    utf8::encode($_[0]);
+#    return 1;
+#  } else {
+#    return !($_[0] =~ /[\x7F-\xFF]/);
+#  }
+sub _make_utf8 {
+	ref $_[0]?
+		(ref($_[0])->can('TO_UTF8') && (($_[0]= $_[0]->TO_UTF8) || 1))
+		: &utf8::is_utf8 && (&utf8::encode || 1) || !($_[0] =~ /[\x80-\xFF]/);
 }
 
 
@@ -78,9 +106,7 @@ sub decode {
 	my $meta_end= index($bytes, "\0");
 	$meta_end >= 0 or croak "Missing end of metadata";
 	if ($meta_end > 0) {
-		my $enc= JSON->new()->utf8->canonical->convert_blessed;
-		DataStore::CAS::FS::InvalidUTF8->add_json_filter($enc);
-		$params->{metadata}= $enc->decode(substr($bytes, 0, $meta_end));
+		$params->{metadata}= ($_json_coder ||= _build_json_coder())->decode(substr($bytes, 0, $meta_end));
 	} else {
 		$params->{metadata}= {};
 	}
@@ -92,8 +118,8 @@ sub decode {
 		my $end= $pos + 3 + $nameLen + 1 + $refLen + 1;
 		($end <= length($bytes))
 			or croak "Unexpected end of file";
-		my $name= DataStore::CAS::FS::InvalidUTF8->decode_utf8(substr($bytes, $pos+3, $nameLen));
-		my $ref= $refLen? DataStore::CAS::FS::InvalidUTF8->decode_utf8(substr($bytes, $pos+3+$nameLen+1, $refLen)) : undef;
+		my $name= decode_utf8(substr($bytes, $pos+3, $nameLen));
+		my $ref= $refLen? decode_utf8(substr($bytes, $pos+3+$nameLen+1, $refLen)) : undef;
 		push @ents, bless [ $code, $name, $ref ], __PACKAGE__.'::Entry';
 		$pos= $end;
 	}
@@ -134,7 +160,7 @@ DataStore::CAS::FS::DirCodec::Minimal - Directory representation with minimal me
 
 =head1 VERSION
 
-version 0.010100_01
+version 0.010100_02
 
 =head1 DESCRIPTION
 

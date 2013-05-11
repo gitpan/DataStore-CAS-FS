@@ -2,7 +2,7 @@ package DataStore::CAS::FS::DirEnt;
 use strict;
 use warnings;
 
-our $VERSION= '0.010000';
+our $VERSION= '0.011000';
 
 # ABSTRACT: Light-weight Immutable Directory Entry Object
 
@@ -19,19 +19,21 @@ BEGIN {
 			size
 			create_ts
 			modify_ts
+			access_ts
+			metadata_ts
 			unix_uid
 			unix_user
 			unix_gid
 			unix_group
 			unix_mode
-			unix_atime
-			unix_ctime
 			unix_dev
 			unix_inode
 			unix_nlink
 			unix_blocksize
 			unix_blockcount
 		);
+	*unix_atime= *access_ts;
+	*unix_ctime= *metadata_ts;
 	*unix_mtime= *modify_ts;
 }
 
@@ -66,7 +68,7 @@ DataStore::CAS::FS::DirEnt - Light-weight Immutable Directory Entry Object
 
 =head1 VERSION
 
-version 0.010100_01
+version 0.010100_02
 
 =head1 DESCRIPTION
 
@@ -74,6 +76,7 @@ DataStore::CAS::FS::DirEnt is a super-light-weight class.  More of an
 interface, really.  DirEnt objects should be considered immutable constants,
 and all attributes are read-only.  It is of course *possible* to modify them,
 but this will break caching features of L<DataStore::CAS::FS>, so don't do that.
+In particular, DO NOT modify the hashref returned by L</as_hash>
 
 See the L<clone(%params)|/clone> method for a convenient way to create modified
 copies of a DirEnt.
@@ -116,8 +119,8 @@ preserve a few files that had mangled names.  While you might want to fix
 those filenames, it would be inconvenient if your scheduled backups broke
 because of a bad filename.
 
-So, I came up with the L<DataStore::CAS::FS::InvalidUTF8> object, which you can
-use to wrap invalid UTF-8 sequences and deal with the problem later.
+So, I came up with the L<DataStore::CAS::FS::InvalidUTF8> object, which you
+can use to wrap invalid UTF-8 sequences and deal with the problem later.
 
 So, this 'name' field should return a string of unicode codepoints *or* an
 instance of DataStore::CAS::FS::InvalidUTF8 (which can stringify to the
@@ -147,8 +150,9 @@ Ref is allowed to be undefined (regardless of type) if the data is not known.
 
 =head2 size
 
-The size of the referenced file.  In the case of directories, this is the size of
-the serialized directory, if one is referenced.  No other types should have a size.
+The size of the referenced file.  In the case of directories, this is the size
+of the serialized directory, if one is referenced.  No other types should have
+a size.
 
 =head2 create_ts
 
@@ -157,6 +161,15 @@ The timestamp of the creation of the file, expressed in Unix Epoch seconds.
 =head2 modify_ts
 
 The timestamp the file was last modified, expressed in Unix Epoch seconds.
+
+=head2 access_ts
+
+The timestamp the file was last acessed, expressed in Unix Epoch seconds.
+
+=head2 metadata_ts
+
+The timestamp the file's metadata (or content) was last modified, expressed in
+Unix Epoch seconds.
 
 =head2 unix_uid
 

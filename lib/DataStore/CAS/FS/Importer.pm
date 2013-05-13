@@ -433,7 +433,7 @@ DataStore::CAS::FS::Importer - Copy files from filesystem into DataStore::CAS::F
 
 =head1 VERSION
 
-version 0.010100_02
+version 0.010100_03
 
 =head1 SYNOPSIS
 

@@ -672,14 +672,10 @@ sub readdir {
 }
 
 
-sub iterator {
+sub tree_iterator {
 	my $self= shift;
 	my %p= (@_ == 1 && ref $_[0] eq 'HASH')? %{$_[0]} : @_;
-	return DataStore::CAS::FS::TreeIterator->new(
-		%p,
-		fs => $self->filesystem,
-		path => $self->path_names
-	);
+	$self->filesystem->tree_iterator(%p, path => $self->path_names);
 }
 
 package DataStore::CAS::FS::TreeIterator;
@@ -824,7 +820,7 @@ DataStore::CAS::FS - Virtual Filesystem backed by Content-Addressable Storage
 
 =head1 VERSION
 
-version 0.010100_02
+version 0.010100_03
 
 =head1 SYNOPSIS
 
@@ -1347,9 +1343,9 @@ reflect any changes to the filesystem until C<$fs-E<gt>commit> is called.
 
 Convenience method for C<$fs-E<gt>readdir($path->path_names)
 
-=head2 iterator
+=head2 tree_iterator
 
-  $iter= $path->iterator( %optional_flags )
+  $iter= $path->tree_iterator( %optional_flags )
 
 Convenience method for
 

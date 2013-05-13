@@ -26,5 +26,6 @@ t/34-dircodec-unix.t
 t/50-fs.t
 t/60-importer.t
 t/70-exporter.t
+t/cas_tmp/_keep
 t/release-pod-coverage.t
 t/release-pod-syntax.t

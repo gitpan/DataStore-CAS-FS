@@ -226,7 +226,7 @@ DataStore::CAS::FS::Exporter - Copy files from DataStore::CAS::FS to real filesy
 
 =head1 VERSION
 
-version 0.010100_02
+version 0.010100_03
 
 =head1 SYNOPSIS
 

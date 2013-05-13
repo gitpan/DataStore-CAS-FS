@@ -69,7 +69,7 @@ DataStore::CAS::FS::Dir - Object representing a directory of file entries, index
 
 =head1 VERSION
 
-version 0.010100_03
+version 0.010100_04
 
 =head1 SYNOPSIS
 

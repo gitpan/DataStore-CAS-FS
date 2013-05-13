@@ -820,7 +820,7 @@ DataStore::CAS::FS - Virtual Filesystem backed by Content-Addressable Storage
 
 =head1 VERSION
 
-version 0.010100_03
+version 0.010100_04
 
 =head1 SYNOPSIS
 

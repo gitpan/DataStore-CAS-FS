@@ -108,7 +108,7 @@ DataStore::CAS::FS::DirCodec::Universal - Codec for saving all arbitrary fields 
 
 =head1 VERSION
 
-version 0.010100_03
+version 0.010100_04
 
 =head1 SYNOPSIS
 

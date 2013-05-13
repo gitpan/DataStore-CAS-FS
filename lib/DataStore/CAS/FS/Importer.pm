@@ -217,15 +217,21 @@ sub _import_directory_entry {
 
 
 our %_ModeToType;
-BEGIN {
-	$_ModeToType{Fcntl::S_IFREG()}= 'file'     if Fcntl->can('S_IFREG');
-	$_ModeToType{Fcntl::S_IFDIR()}= 'dir'      if Fcntl->can('S_IFDIR');
-	$_ModeToType{Fcntl::S_IFLNK()}= 'symlink'  if Fcntl->can('S_IFLNK');
-	$_ModeToType{Fcntl::S_IFBLK()}= 'blockdev' if Fcntl->can('S_IFBLK');
-	$_ModeToType{Fcntl::S_IFCHR()}= 'chardev'  if Fcntl->can('S_IFCHR');
-	$_ModeToType{Fcntl::S_IFIFO()}= 'pipe'     if Fcntl->can('S_IFIFO');
-	$_ModeToType{Fcntl::S_IFSOCK()}= 'socket'  if Fcntl->can('S_IFSOCK');
+# Making this a function allows other code to call it in a BEGIN block if needed
+sub _build_ModeToType {
+	local $@;
+	eval { $_ModeToType{Fcntl::S_IFREG()}= 'file'     };
+	eval { $_ModeToType{Fcntl::S_IFDIR()}= 'dir'      };
+	eval { $_ModeToType{Fcntl::S_IFLNK()}= 'symlink'  };
+	eval { $_ModeToType{Fcntl::S_IFBLK()}= 'blockdev' };
+	eval { $_ModeToType{Fcntl::S_IFCHR()}= 'chardev'  };
+	eval { $_ModeToType{Fcntl::S_IFIFO()}= 'pipe'     };
+	eval { $_ModeToType{Fcntl::S_IFWHT()}= 'whiteout' };
+	eval { $_ModeToType{Fcntl::S_IFSOCK()}= 'socket'  };
 }
+
+_build_ModeToType();
+
 sub collect_dirent_metadata {
 	my ($self, $path, $ent_name, $stat)= @_;
 	
@@ -433,7 +439,7 @@ DataStore::CAS::FS::Importer - Copy files from filesystem into DataStore::CAS::F
 
 =head1 VERSION
 
-version 0.010100_03
+version 0.010100_04
 
 =head1 SYNOPSIS
 

@@ -213,7 +213,7 @@ DataStore::CAS::FS::DirCodec::Unix - Efficiently encode only the attributes of a
 
 =head1 VERSION
 
-version 0.010100_04
+version 0.011000
 
 =head1 DESCRIPTION
 

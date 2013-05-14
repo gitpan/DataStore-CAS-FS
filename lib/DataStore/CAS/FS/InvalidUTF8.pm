@@ -71,7 +71,7 @@ DataStore::CAS::FS::InvalidUTF8 - Wrapper to represent non-utf8 data in a unicod
 
 =head1 VERSION
 
-version 0.010100_04
+version 0.011000
 
 =head1 SYNOPSIS
 
